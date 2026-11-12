@@ -1,0 +1,101 @@
+#!/bin/bash
+# pySTREAM for macOS: double-click "pySTREAM Mac" in the pySTREAM folder.
+# The first time, it installs the Python packages pySTREAM needs (in a Terminal window, so the progress can be seen).
+# After that, it starts pySTREAM (pySTREAM_web.py) without a window and pySTREAM opens in the web browser.
+# pySTREAM stops with "Close pySTREAM" on the page, or by itself a minute after its browser tab was closed.
+
+APP="$(cd "$(dirname "$0")/../.." && pwd)"
+NAME="$(basename "$APP")"
+DIR="$(dirname "$APP")"
+CHECK='import pandas, numpy, numpy_financial, plotly, openpyxl'
+
+# Arguments for pySTREAM_web.py (older macOS versions add a -psn_... argument of their own)
+ARGS=()
+for arg in "$@"; do
+    case "$arg" in -psn_*) ;; *) ARGS+=("$arg") ;; esac
+done
+
+message() { # title, text
+    /usr/bin/osascript -e 'on run argv' \
+        -e 'display dialog (item 2 of argv) with title (item 1 of argv) buttons {"OK"} default button "OK" with icon caution' \
+        -e 'end run' "$1" "$2" >/dev/null 2>&1
+}
+
+# A downloaded app is run by macOS from a read-only temporary place ("App Translocation"), not from the pySTREAM
+# folder. Then find the pySTREAM folder: from the list of mounted folders (macOS mounts the original there),
+# the folder chosen last time, Spotlight, or by asking once.
+REMEMBERED="$HOME/Library/Application Support/pySTREAM/folder.txt"
+
+is_pySTREAM_folder() { [ -n "$1" ] && [ -f "$1/pySTREAM_web.py" ] && [ -d "$1/$NAME" ]; }
+
+find_folder() {
+    local line rest mount_point source original found=() file folder
+    # 1. "<original> on <temporary place> (nullfs, ...)" in the list of mounts
+    while IFS= read -r line; do
+        rest="${line% (*}"
+        mount_point="${rest##* on }"
+        source="${rest% on *}"
+        case "$APP" in
+            "$mount_point"|"$mount_point"/*)
+                original="$source${APP#"$mount_point"}"
+                if is_pySTREAM_folder "$(dirname "$original")"; then DIR="$(dirname "$original")"; return; fi ;;
+        esac
+    done < <(/sbin/mount 2>/dev/null | grep AppTranslocation)
+    # 2. the folder chosen last time
+    folder="$(cat "$REMEMBERED" 2>/dev/null)"
+    if is_pySTREAM_folder "$folder"; then DIR="$folder"; return; fi
+    # 3. Spotlight, if it finds exactly one pySTREAM folder
+    while IFS= read -r file; do
+        folder="$(dirname "$file")"
+        if [ "$(basename "$file")" = "pySTREAM_web.py" ] && is_pySTREAM_folder "$folder"; then found+=("$folder"); fi
+    done < <(/usr/bin/mdfind -name pySTREAM_web.py 2>/dev/null)
+    if [ ${#found[@]} -eq 1 ]; then DIR="${found[0]}"; return; fi
+    # 4. ask, and remember the answer
+    DIR="$(/usr/bin/osascript -e 'POSIX path of (choose folder with prompt "Where is pySTREAM? Choose the pySTREAM folder (the folder that contains pySTREAM Mac):")' 2>/dev/null)"
+    DIR="${DIR%/}"
+    if is_pySTREAM_folder "$DIR"; then
+        mkdir -p "$(dirname "$REMEMBERED")" && printf '%s\n' "$DIR" > "$REMEMBERED"
+    fi
+}
+
+case "$APP" in
+    */AppTranslocation/*) find_folder ;;
+esac
+
+if [ -z "$DIR" ] || [ ! -f "$DIR/pySTREAM_web.py" ]; then
+    message "pySTREAM" "pySTREAM could not find its files. Keep \"$NAME\" in the pySTREAM folder, next to pySTREAM_web.py, and start it from there."
+    exit 1
+fi
+cd "$DIR" || exit 1
+
+# First start (or the Python that pySTREAM was installed with is gone): install in a Terminal window
+if ! .venv/bin/python -c "$CHECK" >/dev/null 2>&1; then
+    INSTALLER="${TMPDIR:-/tmp}/pySTREAM-install-$$.command"
+    printf '#!/bin/bash\nexec /bin/bash %q %q %q %q\n' "$DIR/$NAME/Contents/Resources/install.sh" "$DIR" "$DIR/$NAME" "$INSTALLER" > "$INSTALLER"
+    chmod +x "$INSTALLER"
+    /usr/bin/open -a Terminal "$INSTALLER"
+    exit 0
+fi
+
+# Start pySTREAM in the background; it opens the browser itself (or the open pySTREAM, if it already runs).
+# Its messages go to the usual place for logs on a Mac, not to the pySTREAM folder: when that folder is synced
+# (OneDrive, iCloud), the sync can block writing to a file for a moment, which stopped pySTREAM at the start.
+mkdir -p "$HOME/Library/Logs"
+LOG="$HOME/Library/Logs/pySTREAM.log"
+nohup .venv/bin/python -u pySTREAM_web.py ${ARGS[@]+"${ARGS[@]}"} >"$LOG" 2>&1 &
+PID=$!
+
+# Wait until it runs, so an error at the start can be shown
+for _ in $(seq 1 240); do
+    if grep -q -e "is running at" -e "already running" "$LOG" 2>/dev/null; then
+        exit 0
+    fi
+    if ! kill -0 "$PID" 2>/dev/null; then
+        message "pySTREAM could not start" "$(tail -n 12 "$LOG")
+
+The whole message is in: $LOG"
+        exit 1
+    fi
+    sleep 0.5
+done
+exit 0

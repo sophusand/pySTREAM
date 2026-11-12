@@ -219,6 +219,16 @@ scenarios in `tests/` ("default" is the data shipped with pySTREAM).
 - A new README for students and developers: installing, a first scenario step by
   step, saving scenarios, what to do if something goes wrong, the data, and tests.
 - `LICENSE` (MIT) and `CITATION.cff` (how to cite pySTREAM).
+- pySTREAM in the web browser (`pySTREAM_web.py` and `web/`): a local web server
+  that shows the same pages as the desktop window in a page that fits any screen
+  size, with interactive charts (saved as PNG with the camera icon). It uses the
+  model unchanged; 'Update scenario' gives the same results (tests/test_web.py).
+  Values are edited in place, without separate "Save ... changes" buttons.
+- One start file per system, which installs the first time and then starts the
+  browser version: `pySTREAM Mac.app` and `pySTREAM Windows.bat` (which also uses
+  an existing Conda environment `pySTREAM_class`). They replace the separate
+  install and start scripts. pySTREAM stops with 'Close pySTREAM' on the page, or
+  by itself a minute after its browser tab was closed.
 
 ### Removed
 

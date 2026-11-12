@@ -1,3 +1,5 @@
-# The macOS scripts only run with Unix line endings, the Windows scripts need Windows line endings
-*.command text eol=lf
+# The Windows start file needs Windows line endings; the scripts of the macOS app need Unix line endings
 *.bat text eol=crlf
+*.command text eol=lf
+*.app/Contents/MacOS/* text eol=lf
+*.sh text eol=lf

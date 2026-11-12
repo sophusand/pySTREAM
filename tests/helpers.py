@@ -21,7 +21,7 @@ import openpyxl
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(TESTS_DIR)
 EXPECTED_DIR = os.path.join(TESTS_DIR, 'expected')
-PROGRAM_FILES = ['Backend.py', 'Time_Series.py', 'pySTREAM.py', 'data']
+PROGRAM_FILES = ['Backend.py', 'Time_Series.py', 'pySTREAM.py', 'pySTREAM_web.py', 'data']
 
 
 # Scenario definitions

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pySTREAM</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2327567C'/%3E%3Cpath d='M6 21c4-8 8 4 12-4s6-6 8-4' stroke='%23F1D89C' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/plotly.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Menu">
+      <div class="logo"><span class="logo-py">py</span>STREAM</div>
+      <nav class="nav" id="nav"></nav>
+      <div class="file-actions">
+        <div class="file-label">Scenario file</div>
+        <button class="side-btn" id="btn-save-as" type="button">Save scenario as…</button>
+        <button class="side-btn" id="btn-open" type="button">Open scenario…</button>
+        <button class="side-btn" id="btn-reset" type="button">Reset to default scenario</button>
+        <input type="file" id="file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <button class="side-btn quit-btn" id="btn-quit" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3v8m5.7-4.7a8 8 0 1 1-11.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Close pySTREAM
+        </button>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open the menu" aria-controls="sidebar">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="page-title">
+          <h1 id="page-title">pySTREAM</h1>
+          <span class="page-subtitle" id="page-subtitle"></span>
+        </div>
+        <div class="scenario-controls">
+          <label class="year-field">Scenario year
+            <input id="year" type="text" inputmode="numeric" autocomplete="off" size="5">
+          </label>
+          <span class="dirty" id="dirty" hidden>
+            <span id="dirty-text">Unsaved changes</span>
+            <button class="link-btn" id="btn-discard" type="button">Discard</button>
+          </span>
+          <button class="btn primary" id="btn-update" type="button">Update scenario</button>
+        </div>
+      </header>
+      <div class="banner" id="not-running" hidden>
+        pySTREAM is not running any more. Start it again (double-click <strong>pySTREAM Mac</strong> or <strong>pySTREAM Windows.bat</strong>); this page reconnects by itself.
+      </div>
+      <div class="content" id="content">
+        <div class="loading">Starting pySTREAM…</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="busy" hidden>
+    <div class="busy-box" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="busy-text">Working…</div>
+    </div>
+  </div>
+
+  <dialog id="dialog">
+    <form method="dialog" class="dialog-body">
+      <h3 id="dialog-title"></h3>
+      <p id="dialog-message"></p>
+      <div class="dialog-buttons" id="dialog-buttons"></div>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>
